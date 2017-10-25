@@ -2,7 +2,7 @@ PROTOC_VER ?= 3.0.0
 GOGO_PROTO_TAG ?= v0.3
 GRPC_GATEWAY_TAG ?= v1.1.0
 PLATFORM := linux-x86_64
-GRPC_API := .
+GRPC_API := ./lib/grpc
 BUILDBOX_TAG := reporting-buildbox:0.0.1
 
 
@@ -27,4 +27,5 @@ buildbox-grpc:
 	echo $$PROTO_INCLUDE
 	cd $(GRPC_API) && protoc -I=.:$$PROTO_INCLUDE \
       --gofast_out=plugins=grpc:.\
+      --grpc-gateway_out=logtostderr=true:. \
     *.proto

@@ -2,6 +2,12 @@
 
 
 [[projects]]
+  name = "cloud.google.com/go"
+  packages = ["bigquery","civil","compute/metadata","internal","internal/atomiccache","internal/fields","internal/optional","internal/version"]
+  revision = "eaddaf6dd7ee35fd3c2420c8d27478db176b0485"
+  version = "v0.15.0"
+
+[[projects]]
   branch = "master"
   name = "github.com/Azure/go-ansiterm"
   packages = [".","winterm"]
@@ -151,6 +157,12 @@
   version = "v0.3.1"
 
 [[projects]]
+  name = "github.com/googleapis/gax-go"
+  packages = ["."]
+  revision = "317e0006254c44a0ac427cc52a0e083ff0b9622f"
+  version = "v2.0.0"
+
+[[projects]]
   name = "github.com/gravitational/configure"
   packages = ["cstrings","jsonschema"]
   revision = "1db4b84fe9dbbbaf40827aa714dcca17b368de2c"
@@ -171,13 +183,13 @@
   branch = "roman/pro"
   name = "github.com/gravitational/license"
   packages = [".","authority","constants"]
-  revision = "36e7a32b62c171bf03b7eaa306ae9d097d97143b"
+  revision = "6c33dd178457421a9298b53f575edef855f2e722"
 
 [[projects]]
   branch = "roman/reporting"
   name = "github.com/gravitational/reporting"
-  packages = ["."]
-  revision = "267d244ece4cf6b7fcf45bbf8af0a99981d0cbb8"
+  packages = ["lib/client","lib/events","lib/grpc"]
+  revision = "d9caaa4822cc1f9d3e2108969d5c07c20a50e5da"
 
 [[projects]]
   branch = "master"
@@ -389,6 +401,12 @@
   revision = "48359f4f600b3a2d5cf657458e3f940021631a56"
 
 [[projects]]
+  branch = "master"
+  name = "golang.org/x/oauth2"
+  packages = [".","google","internal","jws","jwt"]
+  revision = "bb50c06baba3d0c76f9d125c0719093e315b5b44"
+
+[[projects]]
   name = "golang.org/x/sys"
   packages = ["unix"]
   revision = "e24f485414aeafb646f6fca458b0bf869c0880a1"
@@ -397,6 +415,18 @@
   name = "golang.org/x/text"
   packages = ["encoding","encoding/internal","encoding/internal/identifier","encoding/unicode","internal/gen","internal/triegen","internal/ucd","internal/utf8internal","runes","secure/bidirule","transform","unicode/bidi","unicode/cldr","unicode/norm","unicode/rangetable"]
   revision = "19e51611da83d6be54ddafce4a4af510cb3e9ea4"
+
+[[projects]]
+  branch = "master"
+  name = "google.golang.org/api"
+  packages = ["bigquery/v2","gensupport","googleapi","googleapi/internal/uritemplates","googleapi/transport","internal","iterator","option","transport/http"]
+  revision = "52fedcc3d56e51c5f1a571d48092238ab2746c73"
+
+[[projects]]
+  name = "google.golang.org/appengine"
+  packages = [".","internal","internal/app_identity","internal/base","internal/datastore","internal/log","internal/modules","internal/remote_api","internal/urlfetch","urlfetch"]
+  revision = "150dc57a1b433e64154302bdc40b6bb8aefa313a"
+  version = "v1.0.0"
 
 [[projects]]
   branch = "master"
@@ -428,6 +458,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "4d0c4fb304b50fc9bd6867f84978f82c31b6b24ca49b5f7e13bdba4b1673a40b"
+  inputs-digest = "f9cb703f89e5946c4ee262fbc022a30e6da22bbf53fb6bf5a85df343885c8ab7"
   solver-name = "gps-cdcl"
   solver-version = 1

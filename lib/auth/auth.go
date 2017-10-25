@@ -38,7 +38,8 @@ import (
 	"github.com/gravitational/teleport/lib/utils"
 
 	"github.com/coreos/go-oidc/oidc"
-	"github.com/gravitational/reporting"
+	reportingclient "github.com/gravitational/reporting/lib/client"
+	reportingevents "github.com/gravitational/reporting/lib/events"
 	"github.com/gravitational/trace"
 	"github.com/jonboulle/clockwork"
 	saml2 "github.com/russellhaering/gosaml2"
@@ -68,7 +69,8 @@ type Authority interface {
 // AuthServerOption allows setting options as functional arguments to AuthServer
 type AuthServerOption func(*AuthServer)
 
-func SetEventRecorder(recorder reporting.Client) AuthServerOption {
+// SetEventRecorder is an auth server option that sets an event recorder
+func SetEventRecorder(recorder reportingclient.Client) AuthServerOption {
 	return func(a *AuthServer) {
 		a.eventRecorder = recorder
 	}
@@ -134,7 +136,7 @@ type AuthServer struct {
 	bk            backend.Backend
 	closeCtx      context.Context
 	cancelFunc    context.CancelFunc
-	eventRecorder reporting.Client
+	eventRecorder reportingclient.Client
 
 	Authority
 
@@ -241,12 +243,7 @@ func (s *AuthServer) GenerateUserCert(key []byte, user services.User, allowedLog
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
-	utils.RecordEvent(s.eventRecorder, reporting.Event{
-		Type: reporting.EventTypeUserLoggedIn,
-		UserLoggedIn: &reporting.UserLoggedIn{
-			UserHash: user.GetName(),
-		},
-	})
+	s.recordEvent(reportingevents.NewUserLoginEvent(user.GetName()))
 	return cert, nil
 }
 
@@ -316,12 +313,7 @@ func (s *AuthServer) SignIn(user string, password []byte) (services.WebSession, 
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
-	utils.RecordEvent(s.eventRecorder, reporting.Event{
-		Type: reporting.EventTypeUserLoggedIn,
-		UserLoggedIn: &reporting.UserLoggedIn{
-			UserHash: user,
-		},
-	})
+	s.recordEvent(reportingevents.NewUserLoginEvent(user))
 	return s.PreAuthenticatedSignIn(user)
 }
 
@@ -803,6 +795,14 @@ func (a *AuthServer) DeleteRole(name string) error {
 		}
 	}
 	return a.Access.DeleteRole(name)
+}
+
+// recordEvent records the provided event is with the auth server recorder if it's set
+func (a *AuthServer) recordEvent(event reportingevents.Event) {
+	if a.eventRecorder == nil {
+		return
+	}
+	a.eventRecorder.Record(event)
 }
 
 const (

@@ -106,6 +106,7 @@ type TeleportProcess struct {
 	Identities map[teleport.Role]*auth.Identity
 
 	extraOptions ExtraTeleportOptions
+	backend      backend.Backend
 }
 
 type ExtraTeleportOptions struct {
@@ -114,6 +115,10 @@ type ExtraTeleportOptions struct {
 
 func (process *TeleportProcess) GetAuthServer() *auth.AuthServer {
 	return process.localAuth
+}
+
+func (process *TeleportProcess) GetBackend() backend.Backend {
+	return process.backend
 }
 
 func (process *TeleportProcess) findStaticIdentity(id auth.IdentityID) (*auth.Identity, error) {
@@ -310,6 +315,7 @@ func (process *TeleportProcess) initAuthService(authority auth.Authority) error 
 	if err != nil {
 		return trace.Wrap(err)
 	}
+	process.backend = b
 
 	// create the audit log, which will be consuming (and recording) all events
 	// and record sessions

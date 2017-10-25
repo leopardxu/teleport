@@ -7,14 +7,14 @@ import (
 	"io/ioutil"
 	"time"
 
-	"github.com/gravitational/reporting"
 	"github.com/gravitational/teleport"
 	"github.com/gravitational/teleport/lib/defaults"
 	"github.com/gravitational/teleport/lib/services"
 	"github.com/gravitational/teleport/lib/utils"
-	"github.com/gravitational/trace"
 
 	"github.com/beevik/etree"
+	reportingevents "github.com/gravitational/reporting/lib/events"
+	"github.com/gravitational/trace"
 	saml2 "github.com/russellhaering/gosaml2"
 	log "github.com/sirupsen/logrus"
 )
@@ -354,13 +354,6 @@ func (a *AuthServer) ValidateSAMLResponse(samlResponse string) (*SAMLAuthRespons
 			response.HostSigners = append(response.HostSigners, authority)
 		}
 	}
-
-	utils.RecordEvent(a.eventRecorder, reporting.Event{
-		Type: reporting.EventTypeUserLoggedIn,
-		UserLoggedIn: &reporting.UserLoggedIn{
-			UserHash: user.GetName(),
-		},
-	})
-
+	a.recordEvent(reportingevents.NewUserLoginEvent(user.GetName()))
 	return response, nil
 }
