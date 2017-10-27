@@ -105,12 +105,7 @@ type TeleportProcess struct {
 	// identities of this process (credentials to auth sever, basically)
 	Identities map[teleport.Role]*auth.Identity
 
-	extraOptions ExtraTeleportOptions
-	backend      backend.Backend
-}
-
-type ExtraTeleportOptions struct {
-	AuthServerOptions []auth.AuthServerOption
+	backend backend.Backend
 }
 
 func (process *TeleportProcess) GetAuthServer() *auth.AuthServer {
@@ -195,7 +190,7 @@ func (process *TeleportProcess) connectToAuthService(role teleport.Role) (*Conne
 
 // NewTeleport takes the daemon configuration, instantiates all required services
 // and starts them under a supervisor, returning the supervisor object
-func NewTeleport(cfg *Config, extraOptions *ExtraTeleportOptions) (*TeleportProcess, error) {
+func NewTeleport(cfg *Config) (*TeleportProcess, error) {
 	// before we do anything reset the SIGINT handler back to the default
 	utils.ResetInterruptSignalHandler()
 
@@ -252,9 +247,6 @@ func NewTeleport(cfg *Config, extraOptions *ExtraTeleportOptions) (*TeleportProc
 		Supervisor: NewSupervisor(),
 		Config:     cfg,
 		Identities: make(map[teleport.Role]*auth.Identity),
-	}
-	if extraOptions != nil {
-		process.extraOptions = *extraOptions
 	}
 
 	serviceStarted := false
@@ -350,7 +342,7 @@ func (process *TeleportProcess) initAuthService(authority auth.Authority) error 
 		Roles:           cfg.Auth.Roles,
 		AuthPreference:  cfg.Auth.Preference,
 		OIDCConnectors:  cfg.OIDCConnectors,
-	}, process.extraOptions.AuthServerOptions...)
+	})
 	if err != nil {
 		return trace.Wrap(err)
 	}

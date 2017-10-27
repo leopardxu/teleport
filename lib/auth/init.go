@@ -30,6 +30,7 @@ import (
 	"github.com/gravitational/teleport/lib/defaults"
 	"github.com/gravitational/teleport/lib/services"
 	"github.com/gravitational/teleport/lib/utils"
+	"github.com/pborman/uuid"
 
 	"github.com/gravitational/trace"
 	log "github.com/sirupsen/logrus"
@@ -167,6 +168,13 @@ func Init(cfg InitConfig, opts ...AuthServerOption) (*AuthServer, *Identity, err
 		}
 	}
 	log.Debugf("[INIT] Cluster Configuration: %v", cfg.ClusterName)
+
+	// init a unique cluster id, it must be set only once, during initial startup
+	err = initClusterID(asrv)
+	if err != nil {
+		return nil, nil, trace.Wrap(err)
+	}
+	log.Debugf("[INIT] Cluster ID: %v", asrv.clusterID)
 
 	err = asrv.SetStaticTokens(cfg.StaticTokens)
 	if err != nil {
@@ -420,6 +428,25 @@ func isFirstStart(authServer *AuthServer, cfg InitConfig) (bool, error) {
 		return true, nil
 	}
 	return false, nil
+}
+
+// initClusterID initializes a unique id for this cluster. Cluster id is generated
+// and saved into the backend on the first start.
+func initClusterID(a *AuthServer) error {
+	data, err := a.bk.GetVal([]string{"cluster_id"}, "val")
+	if err != nil && !trace.IsNotFound(err) {
+		return trace.Wrap(err)
+	}
+	if err == nil {
+		a.clusterID = string(data)
+		return nil
+	}
+	a.clusterID = uuid.New()
+	err = a.bk.CreateVal([]string{"cluster_id"}, "val", []byte(a.clusterID), backend.Forever)
+	if err != nil {
+		return trace.Wrap(err)
+	}
+	return nil
 }
 
 // initKeys initializes a nodes host certificate. If the certificate does not exist, a request

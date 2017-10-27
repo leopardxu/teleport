@@ -15,7 +15,6 @@ import (
 	"github.com/coreos/go-oidc/jose"
 	"github.com/coreos/go-oidc/oauth2"
 	"github.com/coreos/go-oidc/oidc"
-	reportingevents "github.com/gravitational/reporting/lib/events"
 	"github.com/gravitational/trace"
 	log "github.com/sirupsen/logrus"
 )
@@ -232,7 +231,7 @@ func (a *AuthServer) ValidateOIDCAuthCallback(q url.Values) (*OIDCAuthResponse, 
 			response.HostSigners = append(response.HostSigners, authority)
 		}
 	}
-	a.recordEvent(reportingevents.NewUserLoginEvent(user.GetName()))
+	a.recordUserEvent(user.GetName())
 	return response, nil
 }
 

@@ -25,6 +25,9 @@ package auth
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/base64"
 	"fmt"
 	"net/url"
 	"sync"
@@ -68,13 +71,6 @@ type Authority interface {
 
 // AuthServerOption allows setting options as functional arguments to AuthServer
 type AuthServerOption func(*AuthServer)
-
-// SetEventRecorder is an auth server option that sets an event recorder
-func SetEventRecorder(recorder reportingclient.Client) AuthServerOption {
-	return func(a *AuthServer) {
-		a.eventRecorder = recorder
-	}
-}
 
 // NewAuthServer creates and configures a new AuthServer instance
 func NewAuthServer(cfg *InitConfig, opts ...AuthServerOption) *AuthServer {
@@ -137,6 +133,7 @@ type AuthServer struct {
 	closeCtx      context.Context
 	cancelFunc    context.CancelFunc
 	eventRecorder reportingclient.Client
+	clusterID     string
 
 	Authority
 
@@ -164,6 +161,11 @@ func (a *AuthServer) Close() error {
 // SetClock sets clock, used in tests
 func (a *AuthServer) SetClock(clock clockwork.Clock) {
 	a.clock = clock
+}
+
+// SetEventRecorder is an auth server option that sets an event recorder
+func (a *AuthServer) SetEventRecorder(recorder reportingclient.Client) {
+	a.eventRecorder = recorder
 }
 
 // GetDomainName returns the domain name that identifies this authority server.
@@ -243,7 +245,7 @@ func (s *AuthServer) GenerateUserCert(key []byte, user services.User, allowedLog
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
-	s.recordEvent(reportingevents.NewUserLoginEvent(user.GetName()))
+	s.recordUserEvent(user.GetName())
 	return cert, nil
 }
 
@@ -313,7 +315,7 @@ func (s *AuthServer) SignIn(user string, password []byte) (services.WebSession, 
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
-	s.recordEvent(reportingevents.NewUserLoginEvent(user))
+	s.recordUserEvent(user)
 	return s.PreAuthenticatedSignIn(user)
 }
 
@@ -797,12 +799,20 @@ func (a *AuthServer) DeleteRole(name string) error {
 	return a.Access.DeleteRole(name)
 }
 
-// recordEvent records the provided event is with the auth server recorder if it's set
+// recordEvent records the provided event using auth server recorder if it's set
 func (a *AuthServer) recordEvent(event reportingevents.Event) {
 	if a.eventRecorder == nil {
 		return
 	}
 	a.eventRecorder.Record(event)
+}
+
+// recordUserEvent anonymizes the user information and records an event
+func (a *AuthServer) recordUserEvent(email string) {
+	h := hmac.New(sha256.New, []byte(a.clusterID))
+	h.Write([]byte(email))
+	a.recordEvent(reportingevents.NewUserLoginEvent(
+		base64.StdEncoding.EncodeToString(h.Sum(nil))))
 }
 
 const (
