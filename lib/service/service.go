@@ -101,17 +101,19 @@ type TeleportProcess struct {
 	// localAuth has local auth server listed in case if this process
 	// has started with auth server role enabled
 	localAuth *auth.AuthServer
+	// backend is the process' backend
+	backend backend.Backend
 
 	// identities of this process (credentials to auth sever, basically)
 	Identities map[teleport.Role]*auth.Identity
-
-	backend backend.Backend
 }
 
+// GetAuthServer returns the process' auth server
 func (process *TeleportProcess) GetAuthServer() *auth.AuthServer {
 	return process.localAuth
 }
 
+// GetBackend returns the process' backend
 func (process *TeleportProcess) GetBackend() backend.Backend {
 	return process.backend
 }
@@ -730,16 +732,6 @@ func (process *TeleportProcess) initProxyEndpoint(conn *Connector) error {
 		return trace.Wrap(err)
 	}
 
-	srvOptions := []srv.ServerOption{
-		srv.SetLimiter(proxyLimiter),
-		srv.SetProxyMode(tsrv),
-		srv.SetSessionServer(conn.Client),
-		srv.SetAuditLog(conn.Client),
-		srv.SetCiphers(cfg.Ciphers),
-		srv.SetKEXAlgorithms(cfg.KEXAlgorithms),
-		srv.SetMACAlgorithms(cfg.MACAlgorithms),
-	}
-
 	SSHProxy, err := srv.New(cfg.Proxy.SSHAddr,
 		cfg.Hostname,
 		[]ssh.Signer{conn.Identity.KeySigner},
@@ -747,7 +739,14 @@ func (process *TeleportProcess) initProxyEndpoint(conn *Connector) error {
 		cfg.DataDir,
 		nil,
 		cfg.Proxy.PublicAddr,
-		srvOptions...)
+		srv.SetLimiter(proxyLimiter),
+		srv.SetProxyMode(tsrv),
+		srv.SetSessionServer(conn.Client),
+		srv.SetAuditLog(conn.Client),
+		srv.SetCiphers(cfg.Ciphers),
+		srv.SetKEXAlgorithms(cfg.KEXAlgorithms),
+		srv.SetMACAlgorithms(cfg.MACAlgorithms),
+	)
 	if err != nil {
 		return trace.Wrap(err)
 	}
@@ -809,19 +808,20 @@ func (process *TeleportProcess) initProxyEndpoint(conn *Connector) error {
 
 			log.Infof("[PROXY] init TLS listeners")
 			if !process.Config.Proxy.DisableTLS {
-			webListener, err = utils.ListenTLS(
-				cfg.Proxy.WebAddr.Addr,
-				cfg.Proxy.TLSCert,
-				cfg.Proxy.TLSKey)
-			if err != nil {
-				return trace.Wrap(err)
-			}
+				webListener, err = utils.ListenTLS(
+					cfg.Proxy.WebAddr.Addr,
+					cfg.Proxy.TLSCert,
+					cfg.Proxy.TLSKey)
+				if err != nil {
+					return trace.Wrap(err)
+				}
 			} else {
 
-			webListener, err = net.Listen("tcp", cfg.Proxy.WebAddr.Addr)
-			if err != nil {
-				return trace.Wrap(err)
-			}}
+				webListener, err = net.Listen("tcp", cfg.Proxy.WebAddr.Addr)
+				if err != nil {
+					return trace.Wrap(err)
+				}
+			}
 			if err = http.Serve(webListener, proxyLimiter); err != nil {
 				if askedToExit {
 					log.Infof("[PROXY] web server exited")
