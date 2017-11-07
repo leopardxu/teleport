@@ -33,7 +33,7 @@ import (
 	"github.com/gravitational/teleport/lib/session"
 	"github.com/gravitational/teleport/lib/utils"
 
-	reportingevents "github.com/gravitational/reporting/lib/events"
+	"github.com/gravitational/reporting"
 	"github.com/gravitational/trace"
 	"github.com/jonboulle/clockwork"
 	"github.com/julienschmidt/httprouter"
@@ -1504,7 +1504,7 @@ func (s *APIServer) emitAuditEvent(auth ClientI, w http.ResponseWriter, r *http.
 		return nil, trace.Wrap(err)
 	}
 	if req.Type == events.SessionStartEvent {
-		s.AuthServer.recordEvent(reportingevents.NewServerLoginEvent(
+		s.AuthServer.recordEvent(reporting.NewServerLoginEvent(
 			req.Fields[events.SessionServerID].(string)))
 	}
 	return message("ok"), nil

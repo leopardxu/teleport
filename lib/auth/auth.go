@@ -41,8 +41,7 @@ import (
 	"github.com/gravitational/teleport/lib/utils"
 
 	"github.com/coreos/go-oidc/oidc"
-	reportingclient "github.com/gravitational/reporting/lib/client"
-	reportingevents "github.com/gravitational/reporting/lib/events"
+	"github.com/gravitational/reporting"
 	"github.com/gravitational/trace"
 	"github.com/jonboulle/clockwork"
 	saml2 "github.com/russellhaering/gosaml2"
@@ -143,7 +142,7 @@ type AuthServer struct {
 	bk            backend.Backend
 	closeCtx      context.Context
 	cancelFunc    context.CancelFunc
-	eventRecorder reportingclient.Client
+	eventRecorder reporting.Client
 	clusterID     string
 
 	// cachedClusterConfig stores a cached copy of the cluster config to avoid
@@ -180,7 +179,7 @@ func (a *AuthServer) SetClock(clock clockwork.Clock) {
 }
 
 // SetEventRecorder is an auth server option that sets an event recorder
-func (a *AuthServer) SetEventRecorder(recorder reportingclient.Client) {
+func (a *AuthServer) SetEventRecorder(recorder reporting.Client) {
 	a.eventRecorder = recorder
 }
 
@@ -816,7 +815,7 @@ func (a *AuthServer) DeleteRole(name string) error {
 }
 
 // recordEvent records the provided event using auth server recorder if it's set
-func (a *AuthServer) recordEvent(event reportingevents.Event) {
+func (a *AuthServer) recordEvent(event reporting.Event) {
 	if a.eventRecorder == nil {
 		return
 	}
@@ -827,7 +826,7 @@ func (a *AuthServer) recordEvent(event reportingevents.Event) {
 func (a *AuthServer) recordUserEvent(email string) {
 	h := hmac.New(sha256.New, []byte(a.clusterID))
 	h.Write([]byte(email))
-	a.recordEvent(reportingevents.NewUserLoginEvent(
+	a.recordEvent(reporting.NewUserLoginEvent(
 		base64.StdEncoding.EncodeToString(h.Sum(nil))))
 }
 
