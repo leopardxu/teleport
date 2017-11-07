@@ -183,13 +183,13 @@
   branch = "roman/pro"
   name = "github.com/gravitational/license"
   packages = [".","authority","constants"]
-  revision = "7321d5abd7c17075a6d2880086ffc82a614ed85d"
+  revision = "c39f0339153efc722ae17db71472e89f57c77d1a"
 
 [[projects]]
-  branch = "roman/reporting"
+  branch = "roman/restructure"
   name = "github.com/gravitational/reporting"
-  packages = ["lib/client","lib/events","lib/grpc"]
-  revision = "d9caaa4822cc1f9d3e2108969d5c07c20a50e5da"
+  packages = ["."]
+  revision = "a27d99999cf5f90e26d839fb60552a5ecf9e47e2"
 
 [[projects]]
   branch = "master"
@@ -458,6 +458,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "157ecf3e16a14f37a89684eeefaff2375ade5687c21e7919847933a559bcf3fb"
+  inputs-digest = "1f0c11eb16866c875744e9a97923fab33c4862b45e713e12e88bb1333cfa9e6d"
   solver-name = "gps-cdcl"
   solver-version = 1
