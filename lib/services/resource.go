@@ -113,6 +113,12 @@ const (
 	// KindAuthPreference is the type of authentication for this cluster.
 	MetaNameClusterAuthPreference = "cluster-auth-preference"
 
+	// KindClusterConfig is the resource that holds cluster level configuration.
+	KindClusterConfig = "cluster_config"
+
+	// MetaNameClusterName is the exact name of the singleton resource.
+	MetaNameClusterConfig = "cluster-config"
+
 	// KindClusterName is a type of configuration resource that contains the cluster name.
 	KindClusterName = "cluster_name"
 
@@ -294,7 +300,7 @@ type Resource interface {
 	GetName() string
 	// SetName sets the name of the resource
 	SetName(string)
-	// Expiry retuns object expiry setting
+	// Expiry returns object expiry setting
 	Expiry() time.Time
 	// SetExpiry sets object expiry
 	SetExpiry(time.Time)
@@ -324,7 +330,7 @@ func (m *Metadata) SetExpiry(expires time.Time) {
 	m.Expires = &expires
 }
 
-// Expires retuns object expiry setting.
+// Expires returns object expiry setting.
 func (m *Metadata) Expiry() time.Time {
 	if m.Expires == nil {
 		return time.Time{}
@@ -421,7 +427,7 @@ func isDelimiter(r rune) bool {
 	return false
 }
 
-// Ref is a resource refernece
+// Ref is a resource reference
 type Ref struct {
 	Kind string
 	Name string

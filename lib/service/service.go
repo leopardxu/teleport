@@ -310,13 +310,29 @@ func (process *TeleportProcess) initAuthService(authority auth.Authority) error 
 	process.backend = b
 
 	// create the audit log, which will be consuming (and recording) all events
-	// and record sessions
+	// and recording all sessions.
 	var auditLog events.IAuditLog
 	if cfg.Auth.NoAudit {
+		// this is for teleconsole
 		auditLog = &events.DiscardAuditLog{}
-		log.Warn("the audit and session recording are turned off")
+
+		warningMessage := "Warning: Teleport audit and session recording have been " +
+			"turned off. This is dangerous, you will not be able to view audit events " +
+			"or save and playback recorded sessions."
+		log.Warn(warningMessage)
 	} else {
-		auditLog, err = events.NewAuditLog(filepath.Join(cfg.DataDir, "log"))
+		// check if session recording has been disabled. note, we will continue
+		// logging audit events, we just won't record sessions.
+		recordSessions := true
+		if cfg.Auth.ClusterConfig.GetSessionRecording() == services.RecordOff {
+			recordSessions = false
+
+			warningMessage := "Warning: Teleport session recording have been turned off. " +
+				"This is dangerous, you will not be able to save and playback sessions."
+			log.Warn(warningMessage)
+		}
+
+		auditLog, err = events.NewAuditLog(filepath.Join(cfg.DataDir, "log"), recordSessions)
 		if err != nil {
 			return trace.Wrap(err)
 		}
@@ -326,6 +342,7 @@ func (process *TeleportProcess) initAuthService(authority auth.Authority) error 
 	authServer, identity, err := auth.Init(auth.InitConfig{
 		Backend:         b,
 		Authority:       authority,
+		ClusterConfig:   cfg.Auth.ClusterConfig,
 		ClusterName:     cfg.Auth.ClusterName,
 		AuthServiceName: cfg.Hostname,
 		DataDir:         cfg.DataDir,
@@ -648,15 +665,14 @@ func (process *TeleportProcess) RegisterWithAuthServer(token string, role telepo
 //    3. take care of reverse tunnels
 func (process *TeleportProcess) initProxy() error {
 	// if no TLS key was provided for the web UI, generate a self signed cert
-	if process.Config.Proxy.TLSKey == "" && !process.Config.Proxy.DisableWebService {
+	if process.Config.Proxy.TLSKey == "" && !process.Config.Proxy.DisableTLS && !process.Config.Proxy.DisableWebService {
 		err := initSelfSignedHTTPSCert(process.Config)
 		if err != nil {
 			return trace.Wrap(err)
 		}
 	}
-	myRole := teleport.RoleProxy
 
-	process.RegisterWithAuthServer(process.Config.Token, myRole, ProxyIdentityEvent)
+	process.RegisterWithAuthServer(process.Config.Token, teleport.RoleProxy, ProxyIdentityEvent)
 	process.RegisterFunc(func() error {
 		eventsC := make(chan Event)
 		process.WaitForEvent(ProxyIdentityEvent, eventsC, make(chan struct{}))
@@ -792,6 +808,7 @@ func (process *TeleportProcess) initProxyEndpoint(conn *Connector) error {
 			process.BroadcastEvent(Event{Name: ProxyWebServerEvent, Payload: webHandler})
 
 			log.Infof("[PROXY] init TLS listeners")
+			if !process.Config.Proxy.DisableTLS {
 			webListener, err = utils.ListenTLS(
 				cfg.Proxy.WebAddr.Addr,
 				cfg.Proxy.TLSCert,
@@ -799,6 +816,12 @@ func (process *TeleportProcess) initProxyEndpoint(conn *Connector) error {
 			if err != nil {
 				return trace.Wrap(err)
 			}
+			} else {
+
+			webListener, err = net.Listen("tcp", cfg.Proxy.WebAddr.Addr)
+			if err != nil {
+				return trace.Wrap(err)
+			}}
 			if err = http.Serve(webListener, proxyLimiter); err != nil {
 				if askedToExit {
 					log.Infof("[PROXY] web server exited")
@@ -932,7 +955,7 @@ func initSelfSignedHTTPSCert(cfg *Config) (err error) {
 	cfg.Proxy.TLSKey = keyPath
 	cfg.Proxy.TLSCert = certPath
 
-	// return the existing pair if they ahve already been generated:
+	// return the existing pair if they have already been generated:
 	_, err = tls.LoadX509KeyPair(certPath, keyPath)
 	if err == nil {
 		return nil

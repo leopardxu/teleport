@@ -69,6 +69,10 @@ type CommandLineFlags struct {
 	Roles string
 	// -d flag
 	Debug bool
+
+	// --insecure-no-tls flag
+	DisableTLS bool
+
 	// --labels flag
 	Labels string
 	// --httpprofile hidden flag
@@ -401,6 +405,14 @@ func ApplyFileConfig(fc *FileConfig, cfg *service.Config) error {
 			log.Warnf(warningMessage)
 		}
 	}
+
+	// read in and set session recording
+	clusterConfig, err := fc.Auth.SessionRecording.Parse()
+	if err != nil {
+		return trace.Wrap(err)
+	}
+	cfg.Auth.ClusterConfig = clusterConfig
+
 	// read in and set the license file path
 	licenseFile := fc.Auth.LicenseFile
 	if licenseFile != "" {
@@ -642,6 +654,11 @@ func Configure(clf *CommandLineFlags, cfg *service.Config) error {
 	}
 	if err = ApplyFileConfig(fileConf, cfg); err != nil {
 		return trace.Wrap(err)
+	}
+
+	// apply --insecure-no-tls flag:
+	if clf.DisableTLS {
+		cfg.Proxy.DisableTLS = clf.DisableTLS
 	}
 
 	// apply --debug flag:

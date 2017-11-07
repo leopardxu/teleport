@@ -195,6 +195,9 @@ type ProxyConfig struct {
 	// Enabled turns proxy role on or off for this process
 	Enabled bool
 
+	//DisableTLS is enabled if we don't want self signed certs
+	DisableTLS bool
+
 	// DisableWebInterface allows to turn off serving the Web UI interface
 	DisableWebInterface bool
 
@@ -239,6 +242,9 @@ type AuthConfig struct {
 
 	// Roles is a set of roles to pre-provision for this cluster
 	Roles []services.Role
+
+	// ClusterConfig stores cluster level configuration.
+	ClusterConfig services.ClusterConfig
 
 	// ClusterName is a name that identifies this authority and all
 	// host nodes in the cluster that will share this authority domain name
@@ -312,6 +318,7 @@ func ApplyDefaults(cfg *Config) {
 	cfg.Auth.StorageConfig.Type = boltbk.GetName()
 	cfg.Auth.StorageConfig.Params = backend.Params{"path": cfg.DataDir}
 	cfg.Auth.StaticTokens = services.DefaultStaticTokens()
+	cfg.Auth.ClusterConfig = services.DefaultClusterConfig()
 	defaults.ConfigureLimiter(&cfg.Auth.Limiter)
 	// set new style default auth preferences
 	ap := &services.AuthPreferenceV2{}

@@ -103,6 +103,9 @@ type InitConfig struct {
 	// AuthPreference defines the authentication type (local, oidc) and second
 	// factor (off, otp, u2f) passed in from a configuration file.
 	AuthPreference services.AuthPreference
+
+	// ClusterConfig holds cluster level configuration.
+	ClusterConfig services.ClusterConfig
 }
 
 // Init instantiates and configures an instance of AuthServer
@@ -151,6 +154,17 @@ func Init(cfg InitConfig, opts ...AuthServerOption) (*AuthServer, *Identity, err
 		}
 		log.Infof("[INIT] Created Reverse Tunnel: %v", tunnel)
 	}
+
+	// set cluster level config on the backend and then force a sync of the cache.
+	err = asrv.SetClusterConfig(cfg.ClusterConfig)
+	if err != nil {
+		return nil, nil, trace.Wrap(err)
+	}
+	err = asrv.syncCachedClusterConfig()
+	if err != nil {
+		return nil, nil, trace.Wrap(err)
+	}
+	log.Infof("[INIT] Updating Cluster Configuration: %v", cfg.ClusterConfig)
 
 	// cluster name can only be set once. if it has already been set and we are
 	// trying to update it to something else, hard fail.

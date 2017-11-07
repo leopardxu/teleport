@@ -117,7 +117,7 @@ func (s *WebSuite) SetUpSuite(c *C) {
 
 	sessionStreamPollPeriod = time.Millisecond
 	s.logDir = c.MkDir()
-	s.auditLog, err = events.NewAuditLog(s.logDir)
+	s.auditLog, err = events.NewAuditLog(s.logDir, true)
 	c.Assert(err, IsNil)
 	c.Assert(s.auditLog, NotNil)
 	s.mockU2F, err = mocku2f.Create()
@@ -234,7 +234,7 @@ func (s *WebSuite) SetUpTest(c *C) {
 	sessionServer, err := sess.New(s.bk)
 	c.Assert(err, IsNil)
 
-	ctx := context.WithValue(context.TODO(), teleport.ContextUser, teleport.LocalUser{Username: s.user})
+	ctx := context.WithValue(context.TODO(), auth.ContextUser, auth.LocalUser{Username: s.user})
 	authContext, err := authorizer.Authorize(ctx)
 
 	c.Assert(err, IsNil)
@@ -429,7 +429,7 @@ func (s *WebSuite) TestNewUser(c *C) {
 	var sites *getSitesResponse
 	c.Assert(json.Unmarshal(re.Bytes(), &sites), IsNil)
 
-	// in absense of session cookie or bearer auth the same request fill fail
+	// in absence of session cookie or bearer auth the same request fill fail
 
 	// no session cookie:
 	clt = s.client(roundtrip.BearerAuth(rawSess.Token))
@@ -799,7 +799,7 @@ func (s *WebSuite) TestWebSessionsBadInput(c *C) {
 	clt := s.client()
 
 	reqs := []createSessionReq{
-		// emtpy request
+		// empty request
 		{},
 		// missing user
 		{
@@ -1221,7 +1221,7 @@ func (s *WebSuite) TestNewU2FUser(c *C) {
 	var sites *getSitesResponse
 	c.Assert(json.Unmarshal(re.Bytes(), &sites), IsNil)
 
-	// in absense of session cookie or bearer auth the same request fill fail
+	// in absence of session cookie or bearer auth the same request fill fail
 
 	// no session cookie:
 	clt = s.client(roundtrip.BearerAuth(rawSess.Token))

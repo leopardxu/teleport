@@ -128,6 +128,7 @@ var (
 		"kex_algos":          false,
 		"mac_algos":          false,
 		"connector_name":     false,
+		"session_recording":  false,
 		"license_file":       false,
 	}
 )
@@ -442,7 +443,7 @@ func (s *Service) Enabled() bool {
 	return false
 }
 
-// Disabled returns 'true' if the service has been deliverately turned off
+// Disabled returns 'true' if the service has been deliberately turned off
 func (s *Service) Disabled() bool {
 	return s.Configured() && !s.Enabled()
 }
@@ -453,20 +454,6 @@ type Auth struct {
 
 	// ClusterName is the name of the CA who manages this cluster
 	ClusterName ClusterName `yaml:"cluster_name,omitempty"`
-
-	// TrustedClustersFile is a file path to a file containing public CA keys
-	// of clusters we trust. One key per line, those starting with '#' are comments
-	// TODO: THIS SETTING IS DEPRECATED
-	TrustedClusters []TrustedCluster `yaml:"trusted_clusters,omitempty"`
-
-	// FOR INTERNAL USE:
-	// Authorities : 3rd party certificate authorities (CAs) this auth service trusts.
-	Authorities []Authority `yaml:"authorities,omitempty"`
-
-	// FOR INTERNAL USE:
-	// ReverseTunnels is a list of SSH tunnels to 3rd party proxy services (used to talk
-	// to 3rd party auth servers we trust)
-	ReverseTunnels []ReverseTunnel `yaml:"reverse_tunnels,omitempty"`
 
 	// StaticTokens are pre-defined host provisioning tokens supplied via config file for
 	// environments where paranoid security is not needed
@@ -479,17 +466,34 @@ type Auth struct {
 	// type, second factor type, specific connector information, etc.
 	Authentication *AuthenticationConfig `yaml:"authentication,omitempty"`
 
+	// SessionRecording determines where the session is recorded: node, proxy, or off.
+	SessionRecording SessionRecording `yaml:"session_recording"`
+
+	// FOR INTERNAL USE:
+	// Authorities : 3rd party certificate authorities (CAs) this auth service trusts.
+	Authorities []Authority `yaml:"authorities,omitempty"`
+
+	// FOR INTERNAL USE:
+	// ReverseTunnels is a list of SSH tunnels to 3rd party proxy services (used to talk
+	// to 3rd party auth servers we trust)
+	ReverseTunnels []ReverseTunnel `yaml:"reverse_tunnels,omitempty"`
+
+	// TrustedClustersFile is a file path to a file containing public CA keys
+	// of clusters we trust. One key per line, those starting with '#' are comments
+	// Deprecated: Remove in Teleport 2.4.1.
+	TrustedClusters []TrustedCluster `yaml:"trusted_clusters,omitempty"`
+
 	// OIDCConnectors is a list of trusted OpenID Connect Identity providers
-	// Deprecated: Use OIDC section in Authentication section instead.
+	// Deprecated: Remove in Teleport 2.4.1.
 	OIDCConnectors []OIDCConnector `yaml:"oidc_connectors,omitempty"`
 
 	// Configuration for "universal 2nd factor"
-	// Deprecated: Use U2F section in Authentication section instead.
+	// Deprecated: Remove in Teleport 2.4.1.
 	U2F U2F `yaml:"u2f,omitempty"`
 
 	// DynamicConfig determines when file configuration is pushed to the backend. Setting
 	// it here overrides defaults.
-	// TODO: THIS SETTING IS DEPRECATED
+	// Deprecated: Remove in Teleport 2.4.1.
 	DynamicConfig *bool `yaml:"dynamic_config,omitempty"`
 
 	// LicenseFile is a path to the license file. The path can be either absolute or
@@ -503,7 +507,7 @@ type TrustedCluster struct {
 	KeyFile string `yaml:"key_file,omitempty"`
 	// AllowedLogins is a comma-separated list of user logins allowed from that cluster
 	AllowedLogins string `yaml:"allow_logins,omitempty"`
-	// TunnelAddr is a comma-separated list of reverse tunnel addressess to
+	// TunnelAddr is a comma-separated list of reverse tunnel addresses to
 	// connect to
 	TunnelAddr string `yaml:"tunnel_addr,omitempty"`
 }
@@ -620,6 +624,16 @@ func (u *UniversalSecondFactor) Parse() services.U2F {
 	}
 }
 
+// SessionRecording determines where the session is recorded: node, proxy, or off.
+type SessionRecording string
+
+// Parse reads session_recording and creates a services.ClusterConfig.
+func (s SessionRecording) Parse() (services.ClusterConfig, error) {
+	return services.NewClusterConfig(services.ClusterConfigSpecV3{
+		SessionRecording: services.RecordingType(s),
+	})
+}
+
 // SSH is 'ssh_service' section of the config file
 type SSH struct {
 	Service               `yaml:",inline"`
@@ -646,7 +660,7 @@ type Proxy struct {
 	PublicAddr string `yaml:"public_addr,omitempty"`
 }
 
-// ReverseTunnel is a SSH reverse tunnel mantained by one cluster's
+// ReverseTunnel is a SSH reverse tunnel maintained by one cluster's
 // proxy to remote Teleport proxy
 type ReverseTunnel struct {
 	DomainName string   `yaml:"domain_name"`
@@ -792,7 +806,7 @@ type OIDCConnector struct {
 	// be visible to end user
 	ClientSecret string `yaml:"client_secret"`
 	// RedirectURL - Identity provider will use this URL to redirect
-	// client's browser back to it after successfull authentication
+	// client's browser back to it after successful authentication
 	// Should match the URL on Provider's side
 	RedirectURL string `yaml:"redirect_url"`
 	// ACR is the acr_values parameter to be sent with an authorization request.

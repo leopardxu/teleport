@@ -20,6 +20,8 @@
 #  name = "github.com/x/y"
 #  version = "2.4.0"
 
+ignored = ["github.com/Sirupsen/logrus"]
+
 [[constraint]]
   name = "github.com/alecthomas/template"
   branch = "master"
@@ -133,13 +135,14 @@
   version = "0.0.1"
   source = "github.com/gravitational/go-oidc"
 
-[[constraint]]
+[[override]]
   name = "github.com/sirupsen/logrus"
-  version = "v1.0.3"
+  source = "github.com/gravitational/logrus"
+  revision = "e340a662ee7a1b9e3f6675182abed99b892189d6"
 
 [[constraint]]
   name = "github.com/gravitational/reporting"
-  branch = "roman/reporting"
+  branch = "roman/restructure"
 
 [[constraint]]
   name = "github.com/gravitational/license"

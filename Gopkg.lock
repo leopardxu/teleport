@@ -349,8 +349,8 @@
 [[projects]]
   name = "github.com/sirupsen/logrus"
   packages = [".","hooks/syslog"]
-  revision = "f006c2ac4710855cf0f916dd6b77acf6b048dc6e"
-  version = "v1.0.3"
+  revision = "e340a662ee7a1b9e3f6675182abed99b892189d6"
+  source = "github.com/gravitational/logrus"
 
 [[projects]]
   name = "github.com/tstranex/u2f"
@@ -458,6 +458,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "4edfc8bc81c5810bd738277b6bed1a7480adeeb602c83e33cad3c42ec58627d0"
+  inputs-digest = "157ecf3e16a14f37a89684eeefaff2375ade5687c21e7919847933a559bcf3fb"
   solver-name = "gps-cdcl"
   solver-version = 1
