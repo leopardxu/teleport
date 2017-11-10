@@ -183,7 +183,7 @@
   branch = "roman/pro"
   name = "github.com/gravitational/license"
   packages = [".","authority","constants"]
-  revision = "c39f0339153efc722ae17db71472e89f57c77d1a"
+  revision = "90445a4b930a218681c0b551040956269f7c8323"
 
 [[projects]]
   branch = "roman/restructure"

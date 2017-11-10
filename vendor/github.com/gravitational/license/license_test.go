@@ -22,9 +22,9 @@ import (
 
 	"github.com/gravitational/license/authority"
 	"github.com/gravitational/license/constants"
-	"github.com/pborman/uuid"
 
 	"github.com/cloudflare/cfssl/csr"
+	"github.com/pborman/uuid"
 	. "gopkg.in/check.v1"
 )
 
