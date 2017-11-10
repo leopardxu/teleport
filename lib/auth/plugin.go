@@ -23,23 +23,22 @@ import (
 var pluginMutex = &sync.Mutex{}
 var plugin Plugin
 
-// GetPlugin returns web API plugin that
+// GetPlugin returns auth API server plugin that allows injecting handlers
 func GetPlugin() Plugin {
 	pluginMutex.Lock()
 	defer pluginMutex.Unlock()
 	return plugin
 }
 
-// SetPlugin sets plugin for the web handler
+// SetPlugin sets plugin for the auth API server
 func SetPlugin(p Plugin) {
 	pluginMutex.Lock()
 	defer pluginMutex.Unlock()
 	plugin = p
 }
 
-// Plugin is API Server extension setter
-// if set, it will add handler methods during web handler initialization
+// Plugin is auth API server extension setter
 type Plugin interface {
-	// AddHandlers adds handlers to the web API handler
+	// AddHandlers adds handlers to the auth API server
 	AddHandlers(srv *APIServer)
 }

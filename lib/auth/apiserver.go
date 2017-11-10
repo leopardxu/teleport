@@ -1509,7 +1509,7 @@ func (s *APIServer) emitAuditEvent(auth ClientI, w http.ResponseWriter, r *http.
 	}
 	if req.Type == events.SessionStartEvent {
 		s.AuthServer.recordEvent(reporting.NewServerLoginEvent(
-			req.Fields[events.SessionServerID].(string)))
+			req.Fields.GetString(events.SessionServerID)))
 	}
 	return message("ok"), nil
 }
