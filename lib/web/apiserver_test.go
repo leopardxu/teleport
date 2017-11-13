@@ -583,6 +583,9 @@ func (s *WebSuite) createUser(c *C, user string, pass string, otpSecret string) 
 	c.Assert(err, IsNil)
 	role := services.RoleForUser(teleUser)
 	role.SetLogins(services.Allow, []string{user})
+	options := role.GetOptions()
+	options[services.ForwardAgent] = true
+	role.SetOptions(options)
 	err = s.roleAuth.UpsertRole(role, backend.Forever)
 	c.Assert(err, IsNil)
 	teleUser.AddRole(role.GetName())
@@ -991,6 +994,37 @@ func (s *WebSuite) TestTerminal(c *C) {
 			c.Assert(err, IsNil)
 			c.Assert(n > 0, Equals, true)
 			if strings.Contains(removeSpace(string(out)), "vinsong") {
+				close(resultC)
+				return
+			}
+		}
+	}()
+
+	select {
+	case <-time.After(time.Second):
+		c.Fatalf("timeout waiting for proper response")
+	case <-resultC:
+		// everything is as expected
+	}
+}
+
+func (s *WebSuite) TestWebAgentForward(c *C) {
+	term, err := s.makeTerminal(s.authPack(c))
+	c.Assert(err, IsNil)
+	defer term.Close()
+
+	_, err = io.WriteString(term, "env\r\n")
+	c.Assert(err, IsNil)
+
+	resultC := make(chan struct{})
+
+	go func() {
+		out := make([]byte, 100)
+		for {
+			n, err := term.Read(out)
+			c.Assert(err, IsNil)
+			c.Assert(n > 0, Equals, true)
+			if strings.Contains(removeSpace(string(out)), "SSH_AUTH_SOCK") {
 				close(resultC)
 				return
 			}

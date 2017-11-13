@@ -711,6 +711,10 @@ func (s *Server) dispatch(ch ssh.Channel, req *ssh.Request, ctx *srv.ServerConte
 		case "env":
 			// we currently ignore setting any environment variables via SSH for security purposes
 			return s.handleEnv(ch, req, ctx)
+		case sshutils.AgentReq:
+			// to maintain interoperability with OpenSSH, agent forwarding requests
+			// should never fail, so accept the request, do nothing, and return success
+			return nil
 		default:
 			return trace.BadParameter(
 				"proxy doesn't support request type '%v'", req.Type)

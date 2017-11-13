@@ -26,16 +26,18 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh/agent"
+
 	"github.com/gravitational/teleport/lib/auth"
 	"github.com/gravitational/teleport/lib/defaults"
 	"github.com/gravitational/teleport/lib/services"
 	"github.com/gravitational/teleport/lib/sshutils"
 	"github.com/gravitational/teleport/lib/sshutils/scp"
 	"github.com/gravitational/teleport/lib/utils"
-
 	"github.com/gravitational/trace"
+
 	log "github.com/sirupsen/logrus"
-	"golang.org/x/crypto/ssh"
 )
 
 // ProxyClient implements ssh client to a teleport proxy
@@ -46,6 +48,7 @@ type ProxyClient struct {
 	hostLogin       string
 	proxyAddress    string
 	proxyPrincipal  string
+	agentForwarded  bool
 	hostKeyCallback utils.HostKeyCallback
 	authMethod      ssh.AuthMethod
 	siteName        string
@@ -249,6 +252,25 @@ func (proxy *ProxyClient) ConnectToNode(ctx context.Context, nodeAddress string,
 		}
 	}
 
+	// always try to forward agent to the proxy once (we need this check or we'll
+	// pollute the logs with "agent: already have handler" errors). we always try
+	// to forward our agent to the proxy to support the recording proxy. for the
+	// regular proxy this is actually a nop, but for the forwarding proxy this is
+	// required to function. this code never fails because we always return
+	// success to interoperate with OpenSSH.
+	if !proxy.agentForwarded {
+		err = agent.ForwardToAgent(proxy.Client, proxy.teleportClient.localAgent.Agent)
+		if err != nil {
+			return nil, trace.Wrap(err)
+		}
+		err = agent.RequestAgentForwarding(proxySession)
+		if err != nil {
+			return nil, trace.Wrap(err)
+		}
+
+		proxy.agentForwarded = true
+	}
+
 	err = proxySession.RequestSubsystem("proxy:" + nodeAddress)
 	if err != nil {
 		// read the stderr output from the failed SSH session and append
@@ -284,9 +306,7 @@ func (proxy *ProxyClient) ConnectToNode(ctx context.Context, nodeAddress string,
 	}
 
 	client := ssh.NewClient(conn, chans, reqs)
-	if err != nil {
-		return nil, trace.Wrap(err)
-	}
+
 	return &NodeClient{Client: client, Proxy: proxy, Namespace: defaults.Namespace}, nil
 }
 
