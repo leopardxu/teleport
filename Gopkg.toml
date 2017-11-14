@@ -146,7 +146,7 @@ ignored = ["github.com/Sirupsen/logrus"]
 
 [[constraint]]
   name = "github.com/gravitational/reporting"
-  branch = "roman/restructure"
+  branch = "master"
 
 [[constraint]]
   name = "github.com/gravitational/license"
